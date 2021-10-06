@@ -16,7 +16,7 @@ except:
   # Invalid device or cannot modify virtual devices once initialized.
   pass
 
-model = load_model('output/VGG16_detector.h5')
+model = load_model('output/ResNet50_detector.h5')
 label_enc = pickle.loads(open('output/labelEncoder.pkl', "rb").read())
 
 categories = os.listdir('dataset/images/')

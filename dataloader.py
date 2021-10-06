@@ -23,10 +23,12 @@ class DataGenerator(Sequential):
 
     def on_epoch_end(self):
         self.indexes = np.arange(len(self.list_IDs))
+        # shuffle the indexes of the training data after the end of the epoch
         if self.shuffle:
             np.random.shuffle(self.indexes)
 
     def __len__(self):
+        # return number of batches
         return int(np.floor(len(self.list_IDs) / self.batch_size))
 
 
@@ -43,13 +45,13 @@ class DataGenerator(Sequential):
         return self.generate_data(list_IDs_temp)
 
     def generate_data(self, list_IDs_temp):
-        '''Generates data for a single batch'''
+        # Generates data for a single batch
         # initialize X and Y
         X = np.empty((self.batch_size, self.input_size[0], self.input_size[1], self.input_size[2]))
         Y1 = np.empty((self.batch_size, 4))
         Y2 = np.empty((self.batch_size, self.n_classes))
-        # get data
 
+        # get data
         for i, id in enumerate(list_IDs_temp):
 
             filename, startY, endY, startX, endX = self.df.iloc[id,:]
@@ -62,8 +64,11 @@ class DataGenerator(Sequential):
             endY = float(endY) / h
             image = load_img(filename, target_size=(self.input_size[0], self.input_size[1]))
             image = img_to_array(image)
+            # store image in X vector
             X[i,] = image
+            # store bounding box parameters in Y1 vector
             Y1[i,] = np.array([startX, startY, endX, endY])
+            # store class label in Y2 vector
             Y2[i,] = self.labels[id,:]
 
         # Normalize images
@@ -74,13 +79,24 @@ class DataGenerator(Sequential):
 if __name__ == '__main__':
     data_path = 'dataset/data.csv'
     df = pd.read_csv(data_path)
-    train_dataset = DataGenerator(df=df, batch_size=8, input_size=[224,224,3])
+
+    # label encoding at the dataframe level
+    labels = df.iloc[:, -1]
+    label_enc = LabelBinarizer()
+    labels = label_enc.fit_transform(labels)
+
+    # combine encoded labels with dataframe
+    df = df.drop(df.columns[-1], axis=1)
+    labels_df = pd.DataFrame(labels)
+    df = pd.concat([df, labels_df], axis=1)
+
+    train_dataset = DataGenerator(df=df, batch_size=8, input_size=[224,224,3], nclasses=6)
     # testing dataloader
 
     i = 0
     while i < train_dataset.__len__() :
         X, Y = next(iter(train_dataset))
-        i+= 1
+        print(X,Y)
 
 
 
